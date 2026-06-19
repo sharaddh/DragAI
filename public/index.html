@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Component Agent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .spinner { animation: spin 0.8s linear infinite; border: 2px solid transparent; border-top-color: currentColor; border-radius: 50%; width: 18px; height: 18px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .preview-img { max-height: 120px; max-width: 100%; border-radius: 8px; object-fit: contain; }
+    .drop-zone { border: 2px dashed; transition: all 0.2s; }
+    .drop-zone.dragover { border-color: #3b82f6; background: rgba(59,130,246,0.08); }
+    pre code { font-size: 13px; line-height: 1.5; }
+  </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col">
+
+  <header class="border-b border-gray-800 bg-gray-900/50 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm">&lt;/&gt;</div>
+        <h1 class="text-lg font-semibold">Component Agent</h1>
+      </div>
+      <div class="flex items-center gap-3 text-sm text-gray-400">
+        <span class="hidden sm:inline">Built from scratch</span>
+        <span class="w-2 h-2 rounded-full bg-green-500" title="No external LLM"></span>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-6xl mx-auto w-full px-4 py-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <!-- INPUT PANEL -->
+      <div class="space-y-4">
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
+          <div>
+            <label for="prompt" class="block text-sm font-medium text-gray-300 mb-1.5">Describe your component</label>
+            <textarea id="prompt" rows="5" placeholder="e.g., navbar with logo, home, about, and sign up button with dark and light theme toggle"
+              class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none transition-colors"></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1.5">Screenshot / mockup (optional)</label>
+            <div id="dropZone" class="drop-zone border-gray-700 rounded-lg p-4 text-center cursor-pointer hover:border-gray-500 transition-colors">
+              <input type="file" id="imageInput" accept="image/png,image/jpeg,image/gif,image/webp" class="hidden" />
+              <div id="dropContent" class="flex flex-col items-center gap-2">
+                <svg class="w-8 h-8 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <p class="text-xs text-gray-500">Click or drop image here</p>
+              </div>
+              <div id="imagePreview" class="hidden relative">
+                <img id="previewImg" class="preview-img mx-auto" alt="Upload preview" />
+                <button id="removeImage" type="button" class="absolute -top-2 -right-2 w-6 h-6 bg-red-600 rounded-full text-white text-xs flex items-center justify-center hover:bg-red-700 transition-colors">&times;</button>
+              </div>
+            </div>
+          </div>
+
+          <button id="generateBtn" type="button" class="w-full py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+            <span id="btnText">Generate Component</span>
+            <span id="btnSpinner" class="spinner hidden"></span>
+          </button>
+        </div>
+
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Supported components</h3>
+          <div class="flex flex-wrap gap-1.5" id="typeTags"></div>
+        </div>
+      </div>
+
+      <!-- OUTPUT PANEL -->
+      <div class="space-y-4">
+        <div class="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-gray-800 bg-gray-900/80">
+            <div class="flex items-center gap-2 text-sm">
+              <span id="componentName" class="font-medium text-gray-200">Output</span>
+              <span id="componentMeta" class="text-gray-500 text-xs"></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="statusBadge" class="hidden text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400"></span>
+              <button id="copyBtn" type="button" disabled class="text-xs px-3 py-1 rounded-md bg-gray-800 text-gray-400 hover:text-gray-200 hover:bg-gray-700 transition-colors disabled:opacity-30 flex items-center gap-1">
+                <span id="copyLabel">Copy</span>
+              </button>
+            </div>
+          </div>
+          <div id="outputArea" class="overflow-x-auto">
+            <pre class="m-0"><code id="outputCode" class="language-tsx">// Click "Generate Component" to create a component</code></pre>
+          </div>
+        </div>
+
+        <div id="propsPanel" class="hidden bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Props Interface</h3>
+          <pre class="text-sm text-gray-300 overflow-x-auto"><code id="outputProps"></code></pre>
+        </div>
+
+        <div id="analysisPanel" class="hidden bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Image Analysis</h3>
+          <div id="analysisContent" class="space-y-2 text-sm"></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="border-t border-gray-800 py-4 text-center text-xs text-gray-600">
+    Component Agent &mdash; Built from scratch, no external LLM dependencies
+  </footer>
+
+<script>
+const API = '/api/generate';
+const promptEl = document.getElementById('prompt');
+const generateBtn = document.getElementById('generateBtn');
+const btnText = document.getElementById('btnText');
+const btnSpinner = document.getElementById('btnSpinner');
+const outputCode = document.getElementById('outputCode');
+const outputProps = document.getElementById('outputProps');
+const componentName = document.getElementById('componentName');
+const componentMeta = document.getElementById('componentMeta');
+const copyBtn = document.getElementById('copyBtn');
+const copyLabel = document.getElementById('copyLabel');
+const statusBadge = document.getElementById('statusBadge');
+const propsPanel = document.getElementById('propsPanel');
+const analysisPanel = document.getElementById('analysisPanel');
+const analysisContent = document.getElementById('analysisContent');
+const dropZone = document.getElementById('dropZone');
+const imageInput = document.getElementById('imageInput');
+const dropContent = document.getElementById('dropContent');
+const imagePreview = document.getElementById('imagePreview');
+const previewImg = document.getElementById('previewImg');
+const removeImage = document.getElementById('removeImage');
+const typeTags = document.getElementById('typeTags');
+
+let imageBase64 = null;
+
+// Load supported types
+fetch('/api/types').then(r => r.json()).then(d => {
+  typeTags.innerHTML = d.types.map(t => `<span class="px-2 py-0.5 text-xs rounded-full bg-gray-800 text-gray-400">${t}</span>`).join('');
+}).catch(() => {});
+
+// Drop zone / image upload
+dropZone.addEventListener('click', () => imageInput.click());
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) handleImage(file);
+});
+imageInput.addEventListener('change', () => {
+  if (imageInput.files[0]) handleImage(imageInput.files[0]);
+});
+removeImage.addEventListener('click', (e) => {
+  e.stopPropagation();
+  clearImage();
+});
+
+function handleImage(file) {
+  if (file.size > 5 * 1024 * 1024) { alert('Image too large (max 5MB)'); return; }
+  const reader = new FileReader();
+  reader.onload = () => {
+    imageBase64 = reader.result;
+    previewImg.src = imageBase64;
+    dropContent.classList.add('hidden');
+    imagePreview.classList.remove('hidden');
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImage() {
+  imageBase64 = null;
+  imageInput.value = '';
+  previewImg.src = '';
+  dropContent.classList.remove('hidden');
+  imagePreview.classList.add('hidden');
+}
+
+// Generate
+generateBtn.addEventListener('click', generate);
+
+async function generate() {
+  const prompt = promptEl.value.trim();
+  if (!prompt) { promptEl.focus(); return; }
+
+  setLoading(true);
+  clearOutput();
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, image: imageBase64 || undefined }),
+    });
+    const d = await res.json();
+
+    if (!d.success) throw new Error(d.error?.message || 'Generation failed');
+
+    const { componentName: name, code, props, dependencies } = d.data;
+
+    componentName.textContent = name + '.tsx';
+    if (dependencies.length > 0) {
+      componentMeta.textContent = depsLabel(dependencies);
+    } else {
+      componentMeta.textContent = 'No extra dependencies';
+    }
+
+    outputCode.textContent = code;
+    delete outputCode.dataset.highlighted;
+    hljs.highlightElement(outputCode);
+
+    if (props && props !== '// No Props interface defined') {
+      outputProps.textContent = props;
+      propsPanel.classList.remove('hidden');
+    }
+
+    if (d.analysis) {
+      const a = d.analysis;
+      analysisContent.innerHTML = `
+        <div class="flex items-center gap-2">
+          <span class="text-gray-400 w-20 shrink-0">Type</span>
+          <span class="px-2 py-0.5 rounded-full bg-blue-900/50 text-blue-300 text-xs font-medium">${a.type}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-gray-400 w-20 shrink-0">Layout</span>
+          <span class="text-gray-300">${a.layout}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-gray-400 w-20 shrink-0">Size</span>
+          <span class="text-gray-300">${a.dimensions}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-gray-400 w-20 shrink-0">Regions</span>
+          <span class="text-gray-300">${a.regions} detected</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-gray-400 w-20 shrink-0">Dark mode</span>
+          <span class="${a.darkMode ? 'text-green-400' : 'text-gray-300'}">${a.darkMode ? 'Yes' : 'No'}</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-gray-400 w-20 shrink-0">Palette</span>
+          <span class="flex gap-1">${a.colors.slice(0, 4).map(c => `<span class="w-4 h-4 rounded-full inline-block border border-gray-600" style="background:${c}" title="${c}"></span>`).join('')}</span>
+        </div>
+      `;
+      analysisPanel.classList.remove('hidden');
+    } else {
+      analysisPanel.classList.add('hidden');
+    }
+
+    copyBtn.disabled = false;
+    statusBadge.className = 'text-xs px-2 py-0.5 rounded-full bg-green-900/50 text-green-400';
+    statusBadge.textContent = 'Generated';
+    statusBadge.classList.remove('hidden');
+  } catch (err) {
+    outputCode.textContent = '// Error: ' + err.message;
+    statusBadge.className = 'text-xs px-2 py-0.5 rounded-full bg-red-900/50 text-red-400';
+    statusBadge.textContent = 'Error';
+    statusBadge.classList.remove('hidden');
+  } finally {
+    setLoading(false);
+  }
+}
+
+function depsLabel(deps) { return deps.map(d => d.replace(/@[^/]+/, '')).join(', '); }
+
+// Copy
+copyBtn.addEventListener('click', async () => {
+  const text = outputCode.textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    copyLabel.textContent = 'Copied!';
+    setTimeout(() => { copyLabel.textContent = 'Copy'; }, 2000);
+  } catch { copyLabel.textContent = 'Failed'; }
+});
+
+function setLoading(loading) {
+  generateBtn.disabled = loading;
+  btnText.textContent = loading ? 'Generating...' : 'Generate Component';
+  btnSpinner.classList.toggle('hidden', !loading);
+}
+
+function clearOutput() {
+  componentName.textContent = 'Output';
+  componentMeta.textContent = '';
+  copyBtn.disabled = true;
+  statusBadge.classList.add('hidden');
+  propsPanel.classList.add('hidden');
+}
+
+// Ctrl+Enter to submit
+promptEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) generate();
+});
+
+// initial focus
+promptEl.focus();
+</script>
+</body>
+</html>
