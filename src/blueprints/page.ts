@@ -64,10 +64,11 @@ export function generatePage(config: ComponentConfig): ComponentResult {
   const c = getColorClasses(color);
   const darkMode = config.darkMode || false;
 
-  const props = `${name}Props
+  const props = `export interface ${name}Props {
   accentColor?: string;
   dark?: boolean;
-  onThemeToggle?: () => void;`;
+  onThemeToggle?: () => void;
+}`;
 
   const code = `import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
@@ -704,6 +705,6 @@ export default function ${name}({
 }
 `;
 
-  return { componentName: name, code, props: `export interface ${props}`, dependencies: [] };
+  return { componentName: name, code, props, dependencies: [] };
 }
 

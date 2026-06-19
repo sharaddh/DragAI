@@ -74,10 +74,6 @@ export function generateCard(config: ComponentConfig): ComponentResult {
           {children}
         </div>`
     : "";
-  const noBody = !hasBody ? `        <div className="px-6 py-4 space-y-3">
-          {children}
-        </div>` : "";
-
   const footerSection = hasFooter
     ? `        {footer && (
           <div className="border-t border-gray-200 px-6 py-4 dark:border-gray-700">
@@ -108,7 +104,7 @@ export function generateCard(config: ComponentConfig): ComponentResult {
         </div>
       )}`;
 
-  const code = `import React, { useState } from 'react';
+  const code = `import React from 'react';
 
 ${props}
 
@@ -124,7 +120,6 @@ export default function ${name}({
   badgeColor = 'blue',
   actions,
 }) {
-  const [imgLoaded, setImgLoaded] = useState(false);
   const Component = onClick ? 'button' : 'div';
 
   return (

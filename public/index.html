@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Component Agent</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = { darkMode: 'class' }
-  </script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/typescript.min.js"></script>
@@ -31,8 +29,8 @@
         <h1 class="text-lg font-semibold">Component Agent</h1>
       </div>
       <div class="flex items-center gap-3 text-sm text-gray-400">
-        <span class="hidden sm:inline">Built from scratch</span>
-        <span class="w-2 h-2 rounded-full bg-green-500" title="No external LLM"></span>
+        <span class="hidden sm:inline text-gray-500">No external LLM</span>
+        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse" title="All local"></span>
       </div>
     </div>
   </header>
@@ -44,8 +42,8 @@
       <div class="space-y-4">
         <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
           <div>
-            <label for="prompt" class="block text-sm font-medium text-gray-300 mb-1.5">Describe your component</label>
-            <textarea id="prompt" rows="5" placeholder="e.g., navbar with logo, home, about, and sign up button with dark and light theme toggle"
+            <label for="prompt" class="block text-sm font-medium text-gray-300 mb-1.5">Describe what you want to build</label>
+            <textarea id="prompt" rows="5" placeholder='e.g., "dark landing page with features, stats, and testimonials" or "navbar with theme toggle"'
               class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-100 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none transition-colors"></textarea>
           </div>
 
@@ -92,7 +90,7 @@
             </div>
           </div>
           <div id="outputArea" class="overflow-x-auto">
-            <pre class="m-0"><code id="outputCode" class="language-tsx">// Click "Generate Component" to create a component</code></pre>
+            <pre class="m-0"><code id="outputCode" class="language-jsx">// Type a prompt and click Generate, or upload a screenshot</code></pre>
           </div>
         </div>
 
@@ -282,7 +280,7 @@ copyBtn.addEventListener('click', async () => {
 
 function setLoading(loading) {
   generateBtn.disabled = loading;
-  btnText.textContent = loading ? 'Generating...' : 'Generate Component';
+  btnText.textContent = loading ? 'Generating...' : 'Generate';
   btnSpinner.classList.toggle('hidden', !loading);
 }
 

@@ -1,7 +1,8 @@
 {
-  "name": "component-agent",
+  "name": "@anomalyco/component-agent",
   "version": "1.0.0",
-  "description": "Local component generation agent — generates React+Tailwind TSX from text or image, no external LLM",
+  "private": true,
+  "description": "Zero-dependency React component generator — converts text prompts and screenshots into production-ready JSX+PropTypes components using pixel-level image analysis, no external LLM",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -18,9 +19,25 @@
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
+    "@types/express": "^4.21.0",
     "@types/node": "^22.0.0",
     "tsx": "^4.16.0",
     "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "react",
+    "component-generator",
+    "tailwind",
+    "proptypes",
+    "no-llm",
+    "image-analysis",
+    "jimp"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anomalyco/opencode.git"
   }
 }

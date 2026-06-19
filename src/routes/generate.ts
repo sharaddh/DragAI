@@ -4,14 +4,30 @@ import { parsePrompt } from "../core/parser.js";
 import { compose } from "../core/composer.js";
 import { analyzeImage, imageToConfig } from "../image/analyzer.js";
 import { getSupportedTypes } from "../blueprints/registry.js";
-import type { GenerateRequest, GenerateResponse } from "../types/index.js";
+import type { GenerateResponse, ComponentResult } from "../types/index.js";
 import { ZodError } from "zod";
+
+interface AnalysisResponse {
+  type: string;
+  colors: string[];
+  palette: { bg: string; text: string; accent: string; border: string };
+  layout: string;
+  dimensions: string;
+  darkMode: boolean;
+  regions: number;
+}
+
+interface GenerateSuccessBody {
+  success: true;
+  data: ComponentResult;
+  analysis?: AnalysisResponse;
+}
 
 const router = Router();
 
 router.post("/generate", async (req: Request, res: Response): Promise<void> => {
   try {
-    const parsed = generateRequestSchema.parse(req.body) as GenerateRequest;
+    const parsed = generateRequestSchema.parse(req.body);
 
     const componentConfig = parsePrompt(parsed.prompt);
 
@@ -26,13 +42,13 @@ router.post("/generate", async (req: Request, res: Response): Promise<void> => {
 
     const result = compose(componentConfig);
 
-    const response: any = {
+    const body: GenerateSuccessBody = {
       success: true,
       data: result,
     };
 
     if (analysisResult) {
-      response.analysis = {
+      body.analysis = {
         type: analysisResult.suggestedType,
         colors: analysisResult.dominantColors,
         palette: analysisResult.palette,
@@ -43,7 +59,7 @@ router.post("/generate", async (req: Request, res: Response): Promise<void> => {
       };
     }
 
-    res.json(response);
+    res.json(body);
   } catch (err: unknown) {
     if (err instanceof ZodError) {
       const response: GenerateResponse = {
