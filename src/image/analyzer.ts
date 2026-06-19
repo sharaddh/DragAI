@@ -312,7 +312,8 @@ export function imageToConfig(analysis: ImageAnalysisResult): Partial<ComponentC
 
   config.color = analysis.suggestedColor as ComponentConfig["color"];
 
-  if (analysis.suggestedType) {
+  // Only override type when confident (enough regions = complex layout)
+  if (analysis.suggestedType && analysis.regionCount >= 4) {
     config.type = analysis.suggestedType as ComponentConfig["type"];
   }
 
